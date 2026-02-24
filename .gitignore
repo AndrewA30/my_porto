@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Environment variables
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Uploads (keep folder but ignore files)
+app/static/uploads/*
+!app/static/uploads/.gitkeep
+
+# Database
+*.db
+*.sqlite
+*.sqlite3

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Portofolio</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}" />
+</head>
+<body>
+    <main class="container">
+        <header class="page-header">
+            <h1>Portofolio</h1>
+            <p>Daftar profil, skill, dan pengalaman.</p>
+        </header>
+
+        {% if profiles %}
+            <section class="grid">
+                {% for profile in profiles %}
+                    <article class="card">
+                        <div class="profile-header">
+                            {% if profile.image %}
+                                <img src="{{ profile.image }}" alt="Foto {{ profile.name }}" class="avatar" />
+                            {% endif %}
+                            <div>
+                                <h2>{{ profile.name }}</h2>
+                                <p class="muted">{{ profile.age }} tahun · {{ profile.education }} - {{ profile.university }}</p>
+                            </div>
+                        </div>
+
+                        <p class="bio">{{ profile.biography }}</p>
+
+                        <section class="section-block">
+                            <h3>Skills</h3>
+                            {% if profile.skills %}
+                                <ul class="skill-list">
+                                    {% for skill in profile.skills %}
+                                        <li><span>{{ skill.category }}</span> - {{ skill.skill }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p class="muted">Belum ada data skill.</p>
+                            {% endif %}
+                        </section>
+
+                        <section class="section-block">
+                            <h3>Experience</h3>
+                            {% if profile.experiences %}
+                                <ul class="experience-list">
+                                    {% for exp in profile.experiences %}
+                                        <li>
+                                            <p><strong>{{ exp.position }}</strong> - {{ exp.company }}</p>
+                                            <p class="muted">
+                                                {{ exp.start_date.strftime('%d %b %Y') }}
+                                                {% if exp.end_date %}
+                                                    s/d {{ exp.end_date.strftime('%d %b %Y') }}
+                                                {% else %}
+                                                    s/d Sekarang
+                                                {% endif %}
+                                            </p>
+                                            <p>{{ exp.description }}</p>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p class="muted">Belum ada data pengalaman.</p>
+                            {% endif %}
+                        </section>
+                    </article>
+                {% endfor %}
+            </section>
+        {% else %}
+            <p class="empty">Data portofolio belum tersedia.</p>
+        {% endif %}
+    </main>
+</body>
+</html>

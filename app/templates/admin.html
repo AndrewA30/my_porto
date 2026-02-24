@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}" />
+</head>
+<body>
+    <div class="admin-container">
+        <header class="admin-header">
+            <div class="admin-header-content">
+                <h1>Admin Dashboard</h1>
+                <a href="/?logout=true">Logout</a>
+            </div>
+        </header>
+
+        <div class="admin-content">
+            <div class="admin-actions">
+                <h2 style="color: #e0e6ff; margin: 0;">Daftar Profil</h2>
+                <a href="/admin/profile/create" class="btn-add">+ Tambah Profil</a>
+            </div>
+
+            {% if profiles %}
+                <table class="profiles-table">
+                    <thead>
+                        <tr>
+                            <th>Nama</th>
+                            <th>Umur</th>
+                            <th>Pendidikan</th>
+                            <th>Universitas</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for profile in profiles %}
+                            <tr>
+                                <td>{{ profile.name }}</td>
+                                <td>{{ profile.age }}</td>
+                                <td>{{ profile.education }}</td>
+                                <td>{{ profile.university }}</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a href="/admin/profile/{{ profile.id }}/edit" class="btn-edit">Edit</a>
+                                        <form method="post" action="/admin/profile/{{ profile.id }}/delete" style="display: inline;" onsubmit="return confirm('Yakin ingin menghapus profil ini?');">
+                                            <button type="submit" class="btn-delete">Delete</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="no-profiles">
+                    <p>Belum ada profil. <a href="/admin/profile/create" style="color: #667eea;">Buat profil baru</a></p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
