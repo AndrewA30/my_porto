@@ -15,12 +15,28 @@ templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent.parent
 
 @router.get("/", response_class=HTMLResponse)
 def view_portofolio(request: Request, db: Session = Depends(get_db)):
-    profiles = (
+    profile = (
         db.query(models.Profile)
-        .options(selectinload(models.Profile.skills), selectinload(models.Profile.experiences))
-        .all()
+        .options(
+            selectinload(models.Profile.skills),
+            selectinload(models.Profile.experiences),
+            selectinload(models.Profile.projects),
+        )
+        .order_by(models.Profile.created_at.desc())
+        .first()
     )
-    return templates.TemplateResponse("portfolio.html", {"request": request, "profiles": profiles})
+    contact_email = "aavellino591@gmail.com"
+
+    return templates.TemplateResponse(
+        "portfolio.html",
+        {
+            "request": request,
+            "profile": profile,
+            "contact_email": contact_email,
+            "github_url": "https://github.com/AndrewA30?tab=repositories",
+            "linkedin_url": "https://www.linkedin.com/in/andrew-avellino-99649a164/",
+        },
+    )
 
 # endpoint untuk mendapatkan semua portofolio beserta skillnya dengan cara looping.
 # @router.get("/all", response_model=list[schemas.ProfileResponse])
@@ -37,7 +53,11 @@ def view_portofolio(request: Request, db: Session = Depends(get_db)):
 def get_profiles(db: Session = Depends(get_db)):
     profiles = (
         db.query(models.Profile)
-        .options(selectinload(models.Profile.skills), selectinload(models.Profile.experiences))
+        .options(
+            selectinload(models.Profile.skills),
+            selectinload(models.Profile.experiences),
+            selectinload(models.Profile.projects),
+        )
         .all()
     )
     return profiles

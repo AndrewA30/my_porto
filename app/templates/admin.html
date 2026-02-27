@@ -42,6 +42,9 @@
                                 <td>
                                     <div class="action-buttons">
                                         <a href="/admin/profile/{{ profile.id }}/edit" class="btn-edit">Edit</a>
+                                        <a href="/admin/profile/{{ profile.id }}/skills" class="btn-skill">Skills</a>
+                                        <a href="/admin/profile/{{ profile.id }}/projects" class="btn-project">Projects</a>
+                                        <a href="/admin/profile/{{ profile.id }}/experiences" class="btn-experience">Experiences</a>
                                         <form method="post" action="/admin/profile/{{ profile.id }}/delete" style="display: inline;" onsubmit="return confirm('Yakin ingin menghapus profil ini?');">
                                             <button type="submit" class="btn-delete">Delete</button>
                                         </form>

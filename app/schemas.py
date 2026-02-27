@@ -64,6 +64,21 @@ class UpdateExperience(BaseModel):
     end_date: Optional[datetime] = None
     description: Optional[str] = None
 
+class Project(BaseModel):
+    profile_id: int
+    name: str
+    description: str
+    link: Optional[str] = None
+
+class ProjectResponse(BaseModel):
+    name: str
+    description: str
+    link: Optional[str] = None
+
+class UpdateProject(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    link: Optional[str] = None
 class ProfileResponse(BaseModel):
     id: int
     userInput: int

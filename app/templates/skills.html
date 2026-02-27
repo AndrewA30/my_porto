@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Manage Skills - {{ profile.name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}" />
+</head>
+<body>
+    <div class="admin-container">
+        <header class="admin-header">
+            <div class="admin-header-content">
+                <h1>Manage Skills: {{ profile.name }}</h1>
+                <a href="/admin/dashboard">← Kembali ke Dashboard</a>
+            </div>
+        </header>
+
+        <div class="admin-content">
+            <div class="admin-actions">
+                <h2 style="color: #e0e6ff; margin: 0;">Daftar Skills</h2>
+                <a href="/admin/profile/{{ profile.id }}/skills/create" class="btn-add">+ Tambah Skill</a>
+            </div>
+
+            {% if skills %}
+                <table class="profiles-table">
+                    <thead>
+                        <tr>
+                            <th>Kategori</th>
+                            <th>Skill</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for skill in skills %}
+                            <tr>
+                                <td>{{ skill.category }}</td>
+                                <td>{{ skill.skill }}</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a href="/admin/profile/{{ profile.id }}/skills/{{ skill.id }}/edit" class="btn-edit">Edit</a>
+                                        <form method="post" action="/admin/profile/{{ profile.id }}/skills/{{ skill.id }}/delete" style="display: inline;" onsubmit="return confirm('Yakin ingin menghapus skill ini?');">
+                                            <button type="submit" class="btn-delete">Delete</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="no-profiles">
+                    <p>Belum ada skill. <a href="/admin/profile/{{ profile.id }}/skills/create" style="color: #667eea;">Tambah skill baru</a></p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

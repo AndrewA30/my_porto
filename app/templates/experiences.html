@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Manage Experiences - {{ profile.name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}" />
+</head>
+<body>
+    <div class="admin-container">
+        <header class="admin-header">
+            <div class="admin-header-content">
+                <h1>Manage Experiences: {{ profile.name }}</h1>
+                <a href="/admin/dashboard">← Kembali ke Dashboard</a>
+            </div>
+        </header>
+
+        <div class="admin-content">
+            <div class="admin-actions">
+                <h2 style="color: #e0e6ff; margin: 0;">Daftar Pengalaman</h2>
+                <a href="/admin/profile/{{ profile.id }}/experiences/create" class="btn-add">+ Tambah Pengalaman</a>
+            </div>
+
+            {% if experiences %}
+                <table class="profiles-table">
+                    <thead>
+                        <tr>
+                            <th>Perusahaan</th>
+                            <th>Posisi</th>
+                            <th>Periode</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for exp in experiences %}
+                            <tr>
+                                <td>{{ exp.company }}</td>
+                                <td>{{ exp.position }}</td>
+                                <td>
+                                    {{ exp.start_date.strftime('%b %Y') }} - 
+                                    {% if exp.end_date %}
+                                        {{ exp.end_date.strftime('%b %Y') }}
+                                    {% else %}
+                                        Sekarang
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a href="/admin/profile/{{ profile.id }}/experiences/{{ exp.id }}/edit" class="btn-edit">Edit</a>
+                                        <form method="post" action="/admin/profile/{{ profile.id }}/experiences/{{ exp.id }}/delete" style="display: inline;" onsubmit="return confirm('Yakin ingin menghapus pengalaman ini?');">
+                                            <button type="submit" class="btn-delete">Delete</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="no-profiles">
+                    <p>Belum ada pengalaman. <a href="/admin/profile/{{ profile.id }}/experiences/create" style="color: #667eea;">Tambah pengalaman baru</a></p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Manage Projects - {{ profile.name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}" />
+</head>
+<body>
+    <div class="admin-container">
+        <header class="admin-header">
+            <div class="admin-header-content">
+                <h1>Manage Projects: {{ profile.name }}</h1>
+                <a href="/admin/dashboard">← Kembali ke Dashboard</a>
+            </div>
+        </header>
+
+        <div class="admin-content">
+            <div class="admin-actions">
+                <h2 style="color: #e0e6ff; margin: 0;">Daftar Project</h2>
+                <a href="/admin/profile/{{ profile.id }}/projects/create" class="btn-add">+ Tambah Project</a>
+            </div>
+
+            {% if projects %}
+                <table class="profiles-table">
+                    <thead>
+                        <tr>
+                            <th>Nama Project</th>
+                            <th>Deskripsi</th>
+                            <th>Link</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for project in projects %}
+                            <tr>
+                                <td>{{ project.name }}</td>
+                                <td>{{ project.description }}</td>
+                                <td>
+                                    {% if project.link %}
+                                        <a href="{{ project.link }}" target="_blank" rel="noopener noreferrer" style="color: #60a5fa;">Visit</a>
+                                    {% else %}
+                                        <span class="pf-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a href="/admin/profile/{{ profile.id }}/projects/{{ project.id }}/edit" class="btn-edit">Edit</a>
+                                        <form method="post" action="/admin/profile/{{ profile.id }}/projects/{{ project.id }}/delete" style="display: inline;" onsubmit="return confirm('Yakin ingin menghapus project ini?');">
+                                            <button type="submit" class="btn-delete">Delete</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="no-profiles">
+                    <p>Belum ada project. <a href="/admin/profile/{{ profile.id }}/projects/create" style="color: #667eea;">Tambah project baru</a></p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

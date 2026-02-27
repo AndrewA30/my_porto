@@ -3,74 +3,228 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Portofolio</title>
+    <title>My Portfolio</title>
     <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}" />
 </head>
-<body>
-    <main class="container">
-        <header class="page-header">
-            <h1>Portofolio</h1>
-            <p>Daftar profil, skill, dan pengalaman.</p>
-        </header>
+<body class="pf-body">
+    {% if profile %}
+    <div class="pf-tech-lines" aria-hidden="true">
+        <span class="pf-line pf-line-1"></span>
+        <span class="pf-line pf-line-2"></span>
+        <span class="pf-line pf-line-3"></span>
+    </div>
 
-        {% if profiles %}
-            <section class="grid">
-                {% for profile in profiles %}
-                    <article class="card">
-                        <div class="profile-header">
-                            {% if profile.image %}
-                                <img src="{{ profile.image }}" alt="Foto {{ profile.name }}" class="avatar" />
-                            {% endif %}
-                            <div>
-                                <h2>{{ profile.name }}</h2>
-                                <p class="muted">{{ profile.age }} tahun · {{ profile.education }} - {{ profile.university }}</p>
-                            </div>
-                        </div>
+    <header class="pf-navbar">
+        <a href="#home" class="pf-brand">{{ profile.name }}</a>
+        <nav class="pf-nav-links">
+            <a href="#home">Home</a>
+            <a href="#about">About</a>
+            <a href="#project">Project</a>
+            <a href="#experience">Experience</a>
+            <a href="#skills">Skills</a>
+            <a href="#contact">Contact</a>
+        </nav>
+    </header>
 
-                        <p class="bio">{{ profile.biography }}</p>
+    <main class="pf-container">
+        <section id="home" class="pf-hero">
+            <div class="pf-hero-text">
+                <p class="pf-kicker">Hello, I'm</p>
+                <h1>{{ profile.name }}</h1>
+                <p class="pf-subtitle">{{ profile.education }} · {{ profile.university }}</p>
+                <div class="pf-socials">
+                    <a href="{{ github_url }}" target="_blank" rel="noopener noreferrer" class="pf-btn">GitHub</a>
+                    <a href="{{ linkedin_url }}" target="_blank" rel="noopener noreferrer" class="pf-btn pf-btn-outline">LinkedIn</a>
+                </div>
+            </div>
+            {% if profile.image %}
+            <div class="pf-hero-photo-wrap">
+                <img src="{{ profile.image }}" alt="Foto {{ profile.name }}" class="pf-hero-photo" />
+            </div>
+            {% endif %}
+        </section>
 
-                        <section class="section-block">
-                            <h3>Skills</h3>
-                            {% if profile.skills %}
-                                <ul class="skill-list">
-                                    {% for skill in profile.skills %}
-                                        <li><span>{{ skill.category }}</span> - {{ skill.skill }}</li>
-                                    {% endfor %}
-                                </ul>
-                            {% else %}
-                                <p class="muted">Belum ada data skill.</p>
-                            {% endif %}
-                        </section>
+        <section id="about" class="pf-section">
+            <h2>About</h2>
+            <p>{{ profile.biography }}</p>
+            <p class="pf-meta">{{ profile.age }} years old</p>
+        </section>
 
-                        <section class="section-block">
-                            <h3>Experience</h3>
-                            {% if profile.experiences %}
-                                <ul class="experience-list">
-                                    {% for exp in profile.experiences %}
-                                        <li>
-                                            <p><strong>{{ exp.position }}</strong> - {{ exp.company }}</p>
-                                            <p class="muted">
-                                                {{ exp.start_date.strftime('%d %b %Y') }}
-                                                {% if exp.end_date %}
-                                                    s/d {{ exp.end_date.strftime('%d %b %Y') }}
-                                                {% else %}
-                                                    s/d Sekarang
-                                                {% endif %}
-                                            </p>
-                                            <p>{{ exp.description }}</p>
-                                        </li>
-                                    {% endfor %}
-                                </ul>
-                            {% else %}
-                                <p class="muted">Belum ada data pengalaman.</p>
-                            {% endif %}
-                        </section>
-                    </article>
+        <section id="project" class="pf-section">
+            <h2>Project</h2>
+            {% if profile.projects %}
+            <div class="pf-grid">
+                {% for project in profile.projects %}
+                <article class="pf-card pf-project-card" role="button" tabindex="0" onclick="openProjectModal(this)" onkeydown="handleProjectCardKey(event, this)">
+                    <h3>{{ project.name }}</h3>
+                    <p class="pf-project-brief">
+                        {{ project.description[:120] }}{% if project.description|length > 120 %}...{% endif %}
+                    </p>
+                    <p class="pf-muted">Klik untuk detail</p>
+                    <div class="pf-project-data" hidden>
+                        <p class="pf-project-full-desc">{{ project.description }}</p>
+                        <p class="pf-project-full-link">{{ project.link if project.link else '' }}</p>
+                    </div>
+                </article>
                 {% endfor %}
-            </section>
-        {% else %}
-            <p class="empty">Data portofolio belum tersedia.</p>
-        {% endif %}
+            </div>
+            {% else %}
+            <p class="pf-muted">Belum ada data project.</p>
+            {% endif %}
+        </section>
+
+        <div id="pfProjectModal" class="pf-modal" aria-hidden="true" onclick="handleModalBackdrop(event)">
+            <div class="pf-modal-content" role="dialog" aria-modal="true" aria-labelledby="pfModalTitle">
+                <button type="button" class="pf-modal-close" onclick="closeProjectModal()" aria-label="Tutup">×</button>
+                <h3 id="pfModalTitle"></h3>
+                <p id="pfModalDescription" class="pf-text-preline"></p>
+                <p id="pfModalLinkWrap" style="display:none; margin-top: 14px;">
+                    <a id="pfModalLink" href="#" target="_blank" rel="noopener noreferrer" class="pf-link">Kunjungi Project</a>
+                </p>
+            </div>
+        </div>
+
+        <section id="experience" class="pf-section">
+            <h2>Experience</h2>
+            {% if profile.experiences %}
+            <div class="pf-timeline">
+                {% for exp in profile.experiences %}
+                <article class="pf-timeline-item">
+                    <h3>{{ exp.position }} · {{ exp.company }}</h3>
+                    <p class="pf-muted">
+                        {{ exp.start_date.strftime('%b %Y') }} -
+                        {% if exp.end_date %}
+                            {{ exp.end_date.strftime('%b %Y') }}
+                        {% else %}
+                            Present
+                        {% endif %}
+                    </p>
+                    <p class="pf-text-preline">{{ exp.description }}</p>
+                </article>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="pf-muted">Belum ada data pengalaman.</p>
+            {% endif %}
+        </section>
+
+        <section id="skills" class="pf-section">
+            <h2>Skills</h2>
+            {% if profile.skills %}
+            {% set ns = namespace(hard_count=0, soft_count=0) %}
+            {% for skill in profile.skills %}
+                {% if 'hard' in skill.category|lower %}
+                    {% set ns.hard_count = ns.hard_count + 1 %}
+                {% elif 'soft' in skill.category|lower %}
+                    {% set ns.soft_count = ns.soft_count + 1 %}
+                {% endif %}
+            {% endfor %}
+
+            <div class="pf-skill-group">
+                <h3 class="pf-skill-title">Hard Skills</h3>
+                {% if ns.hard_count > 0 %}
+                <div class="pf-chips">
+                    {% for skill in profile.skills %}
+                        {% if 'hard' in skill.category|lower %}
+                        <span class="pf-chip">{{ skill.skill }}</span>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="pf-muted">Belum ada hard skills.</p>
+                {% endif %}
+            </div>
+
+            <div class="pf-skill-group">
+                <h3 class="pf-skill-title">Soft Skills</h3>
+                {% if ns.soft_count > 0 %}
+                <div class="pf-chips">
+                    {% for skill in profile.skills %}
+                        {% if 'soft' in skill.category|lower %}
+                        <span class="pf-chip">{{ skill.skill }}</span>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="pf-muted">Belum ada soft skills.</p>
+                {% endif %}
+            </div>
+            {% else %}
+            <p class="pf-muted">Belum ada data skill.</p>
+            {% endif %}
+        </section>
+
+        <section id="contact" class="pf-section">
+            <h2>Contact</h2>
+            {% if contact_email %}
+            <p>Email: <a href="mailto:{{ contact_email }}" class="pf-link">{{ contact_email }}</a></p>
+            {% else %}
+            <p class="pf-muted">Email belum tersedia.</p>
+            {% endif %}
+        </section>
     </main>
+    {% else %}
+    <main class="pf-empty-wrap">
+        <p class="pf-muted">Data portofolio belum tersedia.</p>
+    </main>
+    {% endif %}
+
+    <script>
+        function openProjectModal(card) {
+            const modal = document.getElementById('pfProjectModal');
+            const titleEl = document.getElementById('pfModalTitle');
+            const descEl = document.getElementById('pfModalDescription');
+            const linkEl = document.getElementById('pfModalLink');
+            const linkWrapEl = document.getElementById('pfModalLinkWrap');
+
+            const title = card.querySelector('h3')?.textContent?.trim() || '';
+            const description = card.querySelector('.pf-project-full-desc')?.textContent || '';
+            const link = card.querySelector('.pf-project-full-link')?.textContent?.trim() || '';
+
+            titleEl.textContent = title;
+            descEl.textContent = description;
+
+            if (link) {
+                linkEl.href = link;
+                linkWrapEl.style.display = 'block';
+            } else {
+                linkEl.href = '#';
+                linkWrapEl.style.display = 'none';
+            }
+
+            modal.classList.add('is-open');
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeProjectModal() {
+            const modal = document.getElementById('pfProjectModal');
+            modal.classList.remove('is-open');
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+        }
+
+        function handleModalBackdrop(event) {
+            if (event.target.id === 'pfProjectModal') {
+                closeProjectModal();
+            }
+        }
+
+        function handleProjectCardKey(event, card) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                openProjectModal(card);
+            }
+        }
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const modal = document.getElementById('pfProjectModal');
+                if (modal && modal.classList.contains('is-open')) {
+                    closeProjectModal();
+                }
+            }
+        });
+    </script>
 </body>
 </html>

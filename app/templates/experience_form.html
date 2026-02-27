@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% if experience %}Edit Pengalaman{% else %}Tambah Pengalaman{% endif %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}" />
+    <style>
+        .form-container {
+            background: #0a0e27;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .form-box {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(26, 31, 58, 0.9);
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            border-radius: 20px;
+            padding: 40px;
+        }
+
+        .form-box h2 {
+            color: #667eea;
+            margin-top: 0;
+        }
+
+        .form-box .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-box label {
+            display: block;
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .form-box input,
+        .form-box textarea {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 8px;
+            color: #e0e6ff;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .form-box input:focus,
+        .form-box textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.2);
+        }
+
+        .form-box textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-box input[type="date"] {
+            cursor: pointer;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            color: #a0aec0;
+            font-weight: normal;
+            margin: 0;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 32px;
+        }
+
+        .btn-submit {
+            flex: 1;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-cancel {
+            flex: 1;
+            padding: 12px;
+            background: transparent;
+            color: #a0aec0;
+            border: 1px solid #a0aec0;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .btn-cancel:hover {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            border-color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <div class="form-box">
+            <h2>{% if experience %}Edit Pengalaman{% else %}Tambah Pengalaman Baru{% endif %}</h2>
+
+            <form method="post">
+                <div class="form-group">
+                    <label for="company">Nama Perusahaan</label>
+                    <input type="text" id="company" name="company" required value="{{ experience.company if experience else '' }}" placeholder="PT. Example Indonesia" />
+                </div>
+
+                <div class="form-group">
+                    <label for="position">Posisi</label>
+                    <input type="text" id="position" name="position" required value="{{ experience.position if experience else '' }}" placeholder="Backend Developer" />
+                </div>
+
+                <div class="form-group">
+                    <label for="start_date">Tanggal Mulai</label>
+                    <input type="date" id="start_date" name="start_date" required value="{{ experience.start_date.strftime('%Y-%m-%d') if experience else '' }}" />
+                </div>
+
+                <div class="form-group">
+                    <label for="end_date">Tanggal Selesai</label>
+                    <input type="date" id="end_date" name="end_date" value="{{ experience.end_date.strftime('%Y-%m-%d') if experience and experience.end_date else '' }}" />
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="is_current" name="is_current" onchange="toggleEndDate(this)" {{ 'checked' if experience and not experience.end_date else '' }} />
+                        <label for="is_current">Masih bekerja di sini</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Deskripsi Pekerjaan</label>
+                    <textarea id="description" name="description" required placeholder="Jelaskan tanggung jawab dan pencapaian Anda...">{{ experience.description if experience else '' }}</textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-submit">{% if experience %}Update Pengalaman{% else %}Tambah Pengalaman{% endif %}</button>
+                    <a href="/admin/profile/{{ profile_id }}/experiences" class="btn-cancel">Batal</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function toggleEndDate(checkbox) {
+            const endDateInput = document.getElementById('end_date');
+            if (checkbox.checked) {
+                endDateInput.value = '';
+                endDateInput.disabled = true;
+                endDateInput.required = false;
+            } else {
+                endDateInput.disabled = false;
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkbox = document.getElementById('is_current');
+            if (checkbox.checked) {
+                toggleEndDate(checkbox);
+            }
+        });
+    </script>
+</body>
+</html>

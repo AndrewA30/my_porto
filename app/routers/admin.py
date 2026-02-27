@@ -105,7 +105,11 @@ async def admin_dashboard(request: Request, db: Session = Depends(get_db), curre
     profiles = (
         db.query(models.Profile)
         .filter(models.Profile.userInput == current_user.id)
-        .options(selectinload(models.Profile.skills), selectinload(models.Profile.experiences))
+        .options(
+            selectinload(models.Profile.skills),
+            selectinload(models.Profile.experiences),
+            selectinload(models.Profile.projects),
+        )
         .all()
     )
     return templates.TemplateResponse("admin.html", {"request": request, "profiles": profiles})
@@ -198,3 +202,310 @@ async def delete_profile_submit(profile_id: int, request: Request, db: Session =
     db.delete(profile)
     db.commit()
     return RedirectResponse(url="/admin/dashboard", status_code=303)
+
+# Skill Management Routes
+@router.get("/profile/{profile_id}/skills", response_class=HTMLResponse)
+async def manage_skills(profile_id: int, request: Request, db: Session = Depends(get_db), current_user = Depends(get_admin_user)):
+    profile = db.query(models.Profile).filter(models.Profile.id == profile_id).first()
+    if not profile or profile.userInput != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+    
+    skills = db.query(models.Skill).filter(models.Skill.profile_id == profile_id).order_by(models.Skill.category.desc()).all()
+    return templates.TemplateResponse("skills.html", {"request": request, "profile": profile, "skills": skills})
+
+@router.get("/profile/{profile_id}/skills/create", response_class=HTMLResponse)
+async def create_skill_page(profile_id: int, request: Request, db: Session = Depends(get_db), current_user = Depends(get_admin_user)):
+    profile = db.query(models.Profile).filter(models.Profile.id == profile_id).first()
+    if not profile or profile.userInput != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+    
+    return templates.TemplateResponse("skill_form.html", {"request": request, "skill": None, "profile_id": profile_id})
+
+@router.post("/profile/{profile_id}/skills/create", response_class=HTMLResponse)
+async def create_skill_submit(
+    profile_id: int,
+    request: Request,
+    category: str = Form(...),
+    skill: str = Form(...),
+    db: Session = Depends(get_db),
+    current_user = Depends(get_admin_user)
+):
+    profile = db.query(models.Profile).filter(models.Profile.id == profile_id).first()
+    if not profile or profile.userInput != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+    
+    new_skill = models.Skill(
+        profile_id=profile_id,
+        category=category,
+        skill=skill
+    )
+    db.add(new_skill)
+    db.commit()
+    
+    return RedirectResponse(url=f"/admin/profile/{profile_id}/skills", status_code=303)
+
+@router.get("/profile/{profile_id}/skills/{skill_id}/edit", response_class=HTMLResponse)
+async def edit_skill_page(profile_id: int, skill_id: int, request: Request, db: Session = Depends(get_db), current_user = Depends(get_admin_user)):
+    profile = db.query(models.Profile).filter(models.Profile.id == profile_id).first()
+    if not profile or profile.userInput != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+    
+    skill = db.query(models.Skill).filter(models.Skill.id == skill_id, models.Skill.profile_id == profile_id).first()
+    if not skill:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Skill not found")
+    
+    return templates.TemplateResponse("skill_form.html", {"request": request, "skill": skill, "profile_id": profile_id})
+
+@router.post("/profile/{profile_id}/skills/{skill_id}/edit", response_class=HTMLResponse)
+async def edit_skill_submit(
+    profile_id: int,
+    skill_id: int,
+    request: Request,
+    category: str = Form(...),
+    skill: str = Form(...),
+    db: Session = Depends(get_db),
+    current_user = Depends(get_admin_user)
+):
+    profile = db.query(models.Profile).filter(models.Profile.id == profile_id).first()
+    if not profile or profile.userInput != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+    
+    skill_obj = db.query(models.Skill).filter(models.Skill.id == skill_id, models.Skill.profile_id == profile_id).first()
+    if not skill_obj:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Skill not found")
+    
+    skill_obj.category = category
+    skill_obj.skill = skill
+    
+    db.commit()
+    return RedirectResponse(url=f"/admin/profile/{profile_id}/skills", status_code=303)
+
+@router.post("/profile/{profile_id}/skills/{skill_id}/delete", response_class=HTMLResponse)
+async def delete_skill_submit(profile_id: int, skill_id: int, request: Request, db: Session = Depends(get_db), current_user = Depends(get_admin_user)):
+    profile = db.query(models.Profile).filter(models.Profile.id == profile_id).first()
+    if not profile or profile.userInput != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+    
+    skill = db.query(models.Skill).filter(models.Skill.id == skill_id, models.Skill.profile_id == profile_id).first()
+    if not skill:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Skill not found")
+    
+    db.delete(skill)
+    db.commit()
+    return RedirectResponse(url=f"/admin/profile/{profile_id}/skills", status_code=303)
+
+
+# Project Management Routes
+@router.get("/profile/{profile_id}/projects", response_class=HTMLResponse)
+async def manage_projects(profile_id: int, request: Request, db: Session = Depends(get_db), current_user=Depends(get_admin_user)):
+    profile = db.query(models.Profile).filter(models.Profile.id == profile_id).first()
+    if not profile or profile.userInput != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+
+    projects = db.query(models.Project).filter(models.Project.profile_id == profile_id).order_by(models.Project.id.desc()).all()
+    return templates.TemplateResponse("projects.html", {"request": request, "profile": profile, "projects": projects})
+
+
+@router.get("/profile/{profile_id}/projects/create", response_class=HTMLResponse)
+async def create_project_page(profile_id: int, request: Request, db: Session = Depends(get_db), current_user=Depends(get_admin_user)):
+    profile = db.query(models.Profile).filter(models.Profile.id == profile_id).first()
+    if not profile or profile.userInput != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+
+    return templates.TemplateResponse("project_form.html", {"request": request, "project": None, "profile_id": profile_id})
+
+
+@router.post("/profile/{profile_id}/projects/create", response_class=HTMLResponse)
+async def create_project_submit(
+    profile_id: int,
+    request: Request,
+    name: str = Form(...),
+    description: str = Form(...),
+    link: str = Form(None),
+    db: Session = Depends(get_db),
+    current_user=Depends(get_admin_user),
+):
+    profile = db.query(models.Profile).filter(models.Profile.id == profile_id).first()
+    if not profile or profile.userInput != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+
+    new_project = models.Project(
+        profile_id=profile_id,
+        name=name,
+        description=description,
+        link=link or None,
+    )
+    db.add(new_project)
+    db.commit()
+
+    return RedirectResponse(url=f"/admin/profile/{profile_id}/projects", status_code=303)
+
+
+@router.get("/profile/{profile_id}/projects/{project_id}/edit", response_class=HTMLResponse)
+async def edit_project_page(profile_id: int, project_id: int, request: Request, db: Session = Depends(get_db), current_user=Depends(get_admin_user)):
+    profile = db.query(models.Profile).filter(models.Profile.id == profile_id).first()
+    if not profile or profile.userInput != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+
+    project = db.query(models.Project).filter(models.Project.id == project_id, models.Project.profile_id == profile_id).first()
+    if not project:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
+
+    return templates.TemplateResponse("project_form.html", {"request": request, "project": project, "profile_id": profile_id})
+
+
+@router.post("/profile/{profile_id}/projects/{project_id}/edit", response_class=HTMLResponse)
+async def edit_project_submit(
+    profile_id: int,
+    project_id: int,
+    request: Request,
+    name: str = Form(...),
+    description: str = Form(...),
+    link: str = Form(None),
+    db: Session = Depends(get_db),
+    current_user=Depends(get_admin_user),
+):
+    profile = db.query(models.Profile).filter(models.Profile.id == profile_id).first()
+    if not profile or profile.userInput != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+
+    project = db.query(models.Project).filter(models.Project.id == project_id, models.Project.profile_id == profile_id).first()
+    if not project:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
+
+    project.name = name
+    project.description = description
+    project.link = link or None
+
+    db.commit()
+    return RedirectResponse(url=f"/admin/profile/{profile_id}/projects", status_code=303)
+
+
+@router.post("/profile/{profile_id}/projects/{project_id}/delete", response_class=HTMLResponse)
+async def delete_project_submit(profile_id: int, project_id: int, request: Request, db: Session = Depends(get_db), current_user=Depends(get_admin_user)):
+    profile = db.query(models.Profile).filter(models.Profile.id == profile_id).first()
+    if not profile or profile.userInput != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+
+    project = db.query(models.Project).filter(models.Project.id == project_id, models.Project.profile_id == profile_id).first()
+    if not project:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
+
+    db.delete(project)
+    db.commit()
+    return RedirectResponse(url=f"/admin/profile/{profile_id}/projects", status_code=303)
+
+# Experience Management Routes
+@router.get("/profile/{profile_id}/experiences", response_class=HTMLResponse)
+async def manage_experiences(profile_id: int, request: Request, db: Session = Depends(get_db), current_user = Depends(get_admin_user)):
+    profile = db.query(models.Profile).filter(models.Profile.id == profile_id).first()
+    if not profile or profile.userInput != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+    
+    experiences = db.query(models.Experience).filter(models.Experience.profile_id == profile_id).order_by(models.Experience.start_date.desc()).all()
+    return templates.TemplateResponse("experiences.html", {"request": request, "profile": profile, "experiences": experiences})
+
+@router.get("/profile/{profile_id}/experiences/create", response_class=HTMLResponse)
+async def create_experience_page(profile_id: int, request: Request, db: Session = Depends(get_db), current_user = Depends(get_admin_user)):
+    profile = db.query(models.Profile).filter(models.Profile.id == profile_id).first()
+    if not profile or profile.userInput != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+    
+    return templates.TemplateResponse("experience_form.html", {"request": request, "experience": None, "profile_id": profile_id})
+
+@router.post("/profile/{profile_id}/experiences/create", response_class=HTMLResponse)
+async def create_experience_submit(
+    profile_id: int,
+    request: Request,
+    company: str = Form(...),
+    position: str = Form(...),
+    start_date: str = Form(...),
+    end_date: str = Form(None),
+    description: str = Form(...),
+    is_current: str = Form(None),
+    db: Session = Depends(get_db),
+    current_user = Depends(get_admin_user)
+):
+    profile = db.query(models.Profile).filter(models.Profile.id == profile_id).first()
+    if not profile or profile.userInput != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+    
+    # Parse dates
+    from datetime import datetime
+    start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+    end_date_obj = None if is_current or not end_date else datetime.strptime(end_date, '%Y-%m-%d').date()
+    
+    new_experience = models.Experience(
+        profile_id=profile_id,
+        company=company,
+        position=position,
+        start_date=start_date_obj,
+        end_date=end_date_obj,
+        description=description
+    )
+    db.add(new_experience)
+    db.commit()
+    
+    return RedirectResponse(url=f"/admin/profile/{profile_id}/experiences", status_code=303)
+
+@router.get("/profile/{profile_id}/experiences/{exp_id}/edit", response_class=HTMLResponse)
+async def edit_experience_page(profile_id: int, exp_id: int, request: Request, db: Session = Depends(get_db), current_user = Depends(get_admin_user)):
+    profile = db.query(models.Profile).filter(models.Profile.id == profile_id).first()
+    if not profile or profile.userInput != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+    
+    experience = db.query(models.Experience).filter(models.Experience.id == exp_id, models.Experience.profile_id == profile_id).first()
+    if not experience:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Experience not found")
+    
+    return templates.TemplateResponse("experience_form.html", {"request": request, "experience": experience, "profile_id": profile_id})
+
+@router.post("/profile/{profile_id}/experiences/{exp_id}/edit", response_class=HTMLResponse)
+async def edit_experience_submit(
+    profile_id: int,
+    exp_id: int,
+    request: Request,
+    company: str = Form(...),
+    position: str = Form(...),
+    start_date: str = Form(...),
+    end_date: str = Form(None),
+    description: str = Form(...),
+    is_current: str = Form(None),
+    db: Session = Depends(get_db),
+    current_user = Depends(get_admin_user)
+):
+    profile = db.query(models.Profile).filter(models.Profile.id == profile_id).first()
+    if not profile or profile.userInput != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+    
+    experience = db.query(models.Experience).filter(models.Experience.id == exp_id, models.Experience.profile_id == profile_id).first()
+    if not experience:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Experience not found")
+    
+    # Parse dates
+    from datetime import datetime
+    start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+    end_date_obj = None if is_current or not end_date else datetime.strptime(end_date, '%Y-%m-%d').date()
+    
+    experience.company = company
+    experience.position = position
+    experience.start_date = start_date_obj
+    experience.end_date = end_date_obj
+    experience.description = description
+    
+    db.commit()
+    return RedirectResponse(url=f"/admin/profile/{profile_id}/experiences", status_code=303)
+
+@router.post("/profile/{profile_id}/experiences/{exp_id}/delete", response_class=HTMLResponse)
+async def delete_experience_submit(profile_id: int, exp_id: int, request: Request, db: Session = Depends(get_db), current_user = Depends(get_admin_user)):
+    profile = db.query(models.Profile).filter(models.Profile.id == profile_id).first()
+    if not profile or profile.userInput != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+    
+    experience = db.query(models.Experience).filter(models.Experience.id == exp_id, models.Experience.profile_id == profile_id).first()
+    if not experience:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Experience not found")
+    
+    db.delete(experience)
+    db.commit()
+    return RedirectResponse(url=f"/admin/profile/{profile_id}/experiences", status_code=303)

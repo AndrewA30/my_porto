@@ -17,6 +17,7 @@ class Profile(Base):
 
     skills = relationship("Skill", back_populates="profile")
     experiences = relationship("Experience", back_populates="profile")
+    projects = relationship("Project", back_populates="profile")
     # user = relationship("User")
 
 class UserLogin(Base):
@@ -49,3 +50,14 @@ class Experience(Base):
     description = Column(String, nullable=False)
 
     profile = relationship("Profile", back_populates="experiences")
+
+class Project(Base):
+    __tablename__ = "projects"
+
+    id = Column(Integer, primary_key=True, index=True)
+    profile_id = Column(Integer, ForeignKey("profiles.id"))
+    name = Column(String, nullable=False)
+    description = Column(String, nullable=False)
+    link = Column(String, nullable=True)
+
+    profile = relationship("Profile", back_populates="projects")
