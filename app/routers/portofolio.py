@@ -27,6 +27,11 @@ def view_portofolio(request: Request, db: Session = Depends(get_db)):
     )
     contact_email = "aavellino591@gmail.com"
 
+    # Sort experiences if profile exists
+    if profile and profile.experiences:
+        profile.experiences.sort(key=lambda x: x.start_date, reverse=True)
+    
+
     return templates.TemplateResponse(
         "portfolio.html",
         {
