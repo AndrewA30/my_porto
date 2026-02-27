@@ -4,7 +4,7 @@ from pathlib import Path
 
 # Naik 1 level dari file ini
 BASE_DIR = Path(__file__).parent.parent
-ENV_PATH = BASE_DIR / ".env"
+ENV_PATH = BASE_DIR / "prod.env"
 
 # print(ENV_PATH)
 
